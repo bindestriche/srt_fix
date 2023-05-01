@@ -13,7 +13,7 @@ save srt_fix.py under
 
 You can install this package with pip:
 ```
-python3 -m pip install -U https://github.com/yt-dlp/yt-dlp-sample-plugins/archive/master.zip
+python3 -m pip install -U https://github.com/bindestriche/srt_fix/master.zip
 ```
 
 See [installing yt-dlp plugins](https://github.com/yt-dlp/yt-dlp#installing-plugins) for the other methods this plugin package can be installed.
