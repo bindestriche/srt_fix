@@ -42,7 +42,7 @@ SRT Fixer is a simple Python-based tool that processes and fixes issues with SRT
 ## Installation
 
 ### Windows
- download the .exe from [resles](yt-autosub-srt-fix/releases/tag/subtitles)
+Download the .exe from [release](yt-autosub-srt-fix/releases/tag/subtitles)
 
 ### other
 

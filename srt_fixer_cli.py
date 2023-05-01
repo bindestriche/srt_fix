@@ -1,4 +1,5 @@
 import re
+from argparse import ArgumentParser
 from datetime import timedelta
 from typing import List, Tuple, Union, Iterator
 import argparse
@@ -131,6 +132,7 @@ class SimpleSrt:
                 i += 1
 
 
+# nice progressbar via tqdm
 try:
     from tqdm import tqdm
 
@@ -138,17 +140,20 @@ try:
 except ModuleNotFoundError:
     TQDM_INSTALLED = False
 
-from Gooey import gooey
-@Gooey
 def main():
-    parser = argparse.ArgumentParser(description="fix duplicate lines in srt converted youtube auto generated subtitles")
+    parser: ArgumentParser = argparse.ArgumentParser(description="fix duplicate lines in srt converted youtube auto generated subtitles")
     parser.add_argument("input", nargs="?", help="Input subtitle file.")
     parser.add_argument("-o", "--output", help="Output subtitle file.")
     parser.add_argument("-idir", "--input-directory", help="Input directory containing subtitle files.")
-    parser.add_argument("-odir", "--output-directory", help="Output directory for processed subtitle files.")
+    parser.add_argument("-odir", "--output-directory", help='Output directory for processed subtitle files.')
     args = parser.parse_args()
     input_directory = args.input_directory
     output_directory = args.output_directory
+    output_file = args.output
+    if output_file and not input_directory:
+        output_directory=None
+
+
 
     if input_directory:
         if not os.path.isdir(input_directory):
@@ -188,7 +193,14 @@ def main():
             print(f"Input file '{file_path}' does not exist or is not accessible.")
             return
 
-        new_file_path = args.output or file_path[:-4] + ".fixed.srt"
+        if not output_file and output_directory:
+            new_file_path = os.oath.join(output_directory,file_path[:-4] + ".fixed.srt")
+        elif os.path.isdir(output_file):
+            new_file_path = os.oath.join(output_directory, file_path[:-4] + ".fixed.srt")
+            pass
+
+            new_file_path = output_file or file_path[:-4] + ".fixed.srt"
+
         process_srt(file_path, new_file_path)
 
 
