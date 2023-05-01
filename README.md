@@ -27,7 +27,7 @@ See [installing yt-dlp plugins](https://github.com/yt-dlp/yt-dlp#installing-plug
 If you use `--skip download` the postprocessor is not triggered and no conversion happens. for that case you can use
 [srt_fixer_cli.py](srt_fixer_cli.py) to process the files independently.
 If you prefer a graphical user interface, check out 
-[subtitle_fixer_tk.exe](https://github.com/bindestriche/youtubesubsearcher) in my other repo. 
+
 
 # srt fixer gui
 
