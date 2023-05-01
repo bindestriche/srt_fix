@@ -42,7 +42,7 @@ SRT Fixer is a simple Python-based tool that processes and fixes issues with SRT
 ## Installation
 
 ### Windows
- downlaod the .exe from release
+ download the .exe from 
 
 ### other
 
