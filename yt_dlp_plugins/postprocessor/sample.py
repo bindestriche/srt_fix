@@ -1,6 +1,6 @@
 # ⚠ Don't use relative imports
 from yt_dlp.postprocessor.common import PostProcessor
-
+from yt-srt-fixer import process_srt
 # ℹ️ See the docstring of yt_dlp.postprocessor.common.PostProcessor
 
 # ⚠ The class name must end in "PP"
@@ -17,6 +17,7 @@ class SamplePluginPP(PostProcessor):
     def run(self, info):
         filepath = info.get('filepath')
         if filepath:  # PP was called after download (default)
+            process_srt(file_path,file_path[:-4] + ".fixed.srt")
             self.to_screen(f'Post-processed {filepath!r} with {self._kwargs}')
         else:  # PP was called before actual download
             filepath = info.get('_filename')
