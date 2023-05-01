@@ -30,7 +30,7 @@ If you prefer a graphical user interface, check out
 [subtitle_fixer_tk.exe](https://github.com/bindestriche/youtubesubsearcher) in my other repo. 
 
 # srt fixer gui
-
+![gui-screenshot.jpg](gui-screenshot.jpg)
 SRT Fixer is a simple Python-based tool that processes and fixes issues with SRT subtitle files. The tool removes duplicate lines and corrects timing issues in SRT files, which are common problems in YouTube's automatically generated subtitles. The application is built using Python's Tkinter library for an easy-to-use graphical user interface.
 
 
