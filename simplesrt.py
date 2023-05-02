@@ -1,12 +1,3 @@
-#  Don't use relative imports
-from yt_dlp.postprocessor.common import PostProcessor
-# start
-import re
-from datetime import timedelta
-from typing import List, Tuple, Union, Iterator
-import argparse
-import os
-
 
 class Subtitle:
     """
@@ -23,7 +14,7 @@ class Subtitle:
 
         Methods
         -------
-        _print_duration(duration) -> str:
+        _print_duration(duration: timedelta) -> str:
             Returns a formatted string representing the given duration.
         __str__() -> str:
             Returns a string representation of the subtitle, including start and end times and text content.
@@ -31,13 +22,13 @@ class Subtitle:
             Returns a string representation of the Subtitle object with its attributes.
     """
 
-    def __init__(self, start_duration, end_duration, text: str):
+    def __init__(self, start_duration: timedelta, end_duration: timedelta, text: str):
         self.start = start_duration
         self.end = end_duration
         self.text = text.strip()
 
     @staticmethod
-    def _print_duration(duration) -> str:
+    def _print_duration(duration: timedelta) -> str:
         hours, remainder = divmod(duration.seconds, 3600)
         minutes, seconds = divmod(remainder, 60)
         return f"{hours:02d}:{minutes:02d}:{seconds:02d},{duration.microseconds // 1000:03d}"
@@ -76,20 +67,21 @@ class SimpleSrt:
         subs = srt.subs
         """
 
-    def __init__(self, srt_string):
+    def __init__(self, srt_string: str):
         self.subs = self.parse_srt(srt_string)
 
     @staticmethod
-    def get_duration(parts):
+    def get_duration(parts: list[int, int, int, int]) -> timedelta:
         """
-        get_duration(parts: list[int, int, int, int]) -> timedelta:
+        get_duration(parts: Tuple[int, int, int, int]) -> timedelta:
         Returns a timedelta object representing the duration from a tuple of hours, minutes, seconds, and milliseconds.
 
         :param parts:  Tuple[int, int, int, int])
         :return: timedelta
         """
+        hour, minute, second, millisecond = parts
 
-        return timedelta(hours=parts[0], minutes=parts[1], seconds=parts[2], milliseconds=parts[3])
+        return timedelta(hours=hour, minutes=minute, seconds=second, milliseconds=millisecond)
 
     def parse_timecode_string(self, line: str) -> Union[bool, Tuple[timedelta, timedelta]]:
         """
@@ -113,7 +105,6 @@ class SimpleSrt:
 
     def parse_srt(self, subtitle_text: str) -> Iterator[Subtitle]:
         srtlines = [x for x in subtitle_text.split("\n") if len(x.strip()) > 0]
-        srtlines += ["", ""] # so last two lines are not lost
 
         i = 0
         while i < len(srtlines):
@@ -133,84 +124,3 @@ class SimpleSrt:
             else:
                 i += 1
 
-
-def process_srt(file_path: str, new_file_path: str):
-    with open(file_path, "r", encoding="utf8") as file, open(new_file_path, "w", encoding="utf8") as new_file:
-        srtstring = file.read()
-        srt = SimpleSrt(srtstring)
-        subs_iter = srt.subs
-        last_subtitle = None
-        index = 1
-        while True:
-            try:
-                subtitle = next(subs_iter)
-            except StopIteration:
-                break
-
-            if last_subtitle is not None:
-                if subtitle is not None:
-                    subtitle.text = subtitle.text.strip("\n ")
-                    if len(subtitle.text) == 0:  # skip over empty subtitles
-                        continue
-                    if (subtitle.start - subtitle.end < timedelta(milliseconds=150) and
-                            last_subtitle.text in subtitle.text):
-                        last_subtitle.start = subtitle.end
-                        continue
-                    current_lines = subtitle.text.split("\n")
-                    last_lines = last_subtitle.text.split("\n")
-                    if current_lines[0] == last_lines[-1]:
-                        subtitle.text = "\n".join(current_lines[1:])
-                    if subtitle.start < last_subtitle.end:
-                        last_subtitle.end = subtitle.start - timedelta(milliseconds=1)
-                new_file.write(f"{index}\n{last_subtitle}")
-                index += 1
-
-            if subtitle is None:
-                break
-            last_subtitle = subtitle
-
-
-# ℹ️ See the docstring of yt_dlp.postprocessor.common.PostProcessor
-
-
-# ⚠ The class name must end in "PP"
-
-
-class srt_fixPP(PostProcessor):
-    def __init__(self, downloader=None, **kwargs):
-        # ⚠ Only kwargs can be passed from the CLI, and all argument values will be string
-        # Also, "downloader", "when" and "key" are reserved names
-        super().__init__(downloader)
-        self._kwargs = kwargs
-
-
-    # ℹ️ See docstring of yt_dlp.postprocessor.common.PostProcessor.run
-    def run(self, info):
-        filepath = info.get('filepath')
-
-        if filepath:  # PP was called after download (default)
-            rawname = os.path.splitext(filepath)[0]
-
-            for file in os.listdir(os.getcwd()):
-                if file.endswith(".srt") and rawname in file:
-                    newfile = file[:-4] + ".fixed.srt"
-                    if not os.path.isfile(newfile):
-                        process_srt(file, newfile)
-                        self.to_screen(f'applied srt_fix to {file} saved as {rawname + ".fixed.srt"}')
-                    else:
-                        self.to_screen(f'skipped srt_fix of {file}: {newfile} exists')
-
-        else:  # PP was called before actual download
-            filepath = info.get('_filename')
-            self.to_screen(f'Pre-processed {filepath!r} with {self._kwargs}')
-            rawname = os.path.splitext(filepath)[0]
-            for file in os.listdir(os.getcwd()):
-                if file.endswith(".srt") and rawname in file:
-                    newfile = file[:-4] + ".fixed.srt"
-                    if not os.path.isfile(newfile):
-                        process_srt(file, newfile)
-                        self.to_screen(f'applied srt_fix to {file} saved as {newfile}')
-                    else:
-                        self.to_screen(f'skipped srt_fix of {file}: {newfile} exists')
-
-        return [], info  # return list_of_files_to_delete, info_dict
