@@ -1,3 +1,8 @@
+import os
+from datetime import timedelta
+from typing import List, Tuple, Union, Iterator
+import re
+
 
 class Subtitle:
     """
@@ -105,6 +110,7 @@ class SimpleSrt:
 
     def parse_srt(self, subtitle_text: str) -> Iterator[Subtitle]:
         srtlines = [x for x in subtitle_text.split("\n") if len(x.strip()) > 0]
+        srtlines += ["", ""]
 
         i = 0
         while i < len(srtlines):
@@ -124,3 +130,54 @@ class SimpleSrt:
             else:
                 i += 1
 
+
+def dedupe_yt_srt(subs_iter):
+    last_subtitle = None
+    index = 1
+    text = ""
+
+
+    for subtitle in subs_iter:
+
+        if last_subtitle is None: # first interation set last for comparison
+             last_subtitle = subtitle
+             continue
+
+        subtitle.text = subtitle.text.strip("\n")
+        if len(subtitle.text) == 0:  # skip over empty subtitles
+            continue
+
+        if (subtitle.start - subtitle.end < timedelta(milliseconds=150) and # very short
+                        last_subtitle.text == subtitle.text): # same text as previous
+            last_subtitle.end = subtitle.end # lengthen previous
+            continue
+
+        current_lines = subtitle.text.split("\n")
+        last_lines = last_subtitle.text.split("\n")
+
+        if current_lines[0] == last_lines[-1]: # if first current is last previous
+            subtitle.text = "\n".join(current_lines[1:]) # discard first line of current
+
+        if subtitle.start <= last_subtitle.end: # remove overlap and let 1ms gap
+            last_subtitle.end = subtitle.start - timedelta(milliseconds=1)
+
+        text += f"{index}\n{last_subtitle}"# __str__ hnadles adding timecode
+        last_subtitle = subtitle
+        index += 1
+    text += f"{index}\n{last_subtitle}"
+
+
+
+
+    return text
+
+
+def process_srt(file_path: str, new_file_path: str):
+    text = ""
+    with open(file_path, "r", encoding="utf8") as file:
+        srtstring = file.read()
+        srt = SimpleSrt(srtstring)
+        text = dedupe_yt_srt(srt.subs)
+
+    with open(new_file_path, "w", encoding="utf8") as new_file:
+        new_file.write(text.strip())

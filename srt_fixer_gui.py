@@ -1,9 +1,6 @@
-import re
-from datetime import timedelta
-from typing import List, Tuple, Union, Iterator
-import argparse
-import os
 
+from datetime import timedelta
+import argparse
 from simplesrt import SimpleSrt
 
 
