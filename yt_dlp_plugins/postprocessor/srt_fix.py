@@ -1,6 +1,8 @@
 #  Don't use relative imports
 from yt_dlp.postprocessor.common import PostProcessor
+
 # start
+from yt_dlp.postprocessor import FFmpegSubtitlesConvertorPP
 import re
 import os
 from datetime import timedelta
@@ -188,6 +190,7 @@ def process_srt(file_path: str, new_file_path: str):
 # ℹ️ See the docstring of yt_dlp.postprocessor.common.PostProcessor
 
 
+
 # ⚠ The class name must end in "PP"
 
 
@@ -200,31 +203,28 @@ class srt_fixPP(PostProcessor):
 
 
     # ℹ️ See docstring of yt_dlp.postprocessor.common.PostProcessor.run
+
+    def process_all(self,filepath):
+        rawname = os.path.splitext(filepath)[0]  # filename without extension as this is videofile
+        for file in os.listdir(os.getcwd()):
+            if file.endswith(".srt") and rawname in file:  # finding srt file
+                newfile = file[:-4] + ".fixed.srt"
+                if not os.path.isfile(newfile):
+                    process_srt(file, newfile)
+                    self.to_screen(f'applied srt_fix to {file} saved as {rawname + ".fixed.srt"}')
+                else:
+                    self.to_screen(f'skipped srt_fix of {file}: {newfile} exists')
     def run(self, info):
+        info, files_to_delete = FFmpegSubtitlesConvertorPP(self._downloader, 'srt').run(info)
         filepath = info.get('filepath')
 
         if filepath:  # PP was called after download (default)
-            rawname = os.path.splitext(filepath)[0] # filename without extension as this is videofile
-            for file in os.listdir(os.getcwd()):
-                if file.endswith(".srt") and rawname in file:  # finding srt file
-                    newfile = file[:-4] + ".fixed.srt"
-                    if not os.path.isfile(newfile):
-                        process_srt(file, newfile)
-                        self.to_screen(f'applied srt_fix to {file} saved as {rawname + ".fixed.srt"}')
-                    else:
-                        self.to_screen(f'skipped srt_fix of {file}: {newfile} exists')
+            self.to_screen(f'post-processed {filepath!r} with {self._kwargs}')
+            self.process_all(filepath)
 
         else:  # PP was called before actual download
             filepath = info.get('_filename')
             self.to_screen(f'Pre-processed {filepath!r} with {self._kwargs}')
-            rawname = os.path.splitext(filepath)[0]
-            for file in os.listdir(os.getcwd()):
-                if file.endswith(".srt") and rawname in file:
-                    newfile = file[:-4] + ".fixed.srt"
-                    if not os.path.isfile(newfile):
-                        process_srt(file, newfile)
-                        self.to_screen(f'applied srt_fix to {file} saved as {newfile}')
-                    else:
-                        self.to_screen(f'skipped srt_fix of {file}: {newfile} exists')
+            self.process_all(filepath)
 
         return [], info  # return list_of_files_to_delete, info_dict
