@@ -2,11 +2,9 @@
 from yt_dlp.postprocessor.common import PostProcessor
 
 # start
-from yt_dlp.postprocessor import FFmpegSubtitlesConvertorPP
 import re
 import os
 from datetime import timedelta
-from typing import List, Tuple, Union, Iterator
 
 
 class Subtitle:
@@ -81,7 +79,7 @@ class SimpleSrt:
         self.subs = self.parse_srt(srt_string)
 
     @staticmethod
-    def get_duration(parts: list[int, int, int, int]) -> timedelta:
+    def get_duration(parts) -> timedelta:
         """
         get_duration(parts: Tuple[int, int, int, int]) -> timedelta:
         Returns a timedelta object representing the duration from a tuple of hours, minutes, seconds, and milliseconds.
@@ -93,7 +91,7 @@ class SimpleSrt:
 
         return timedelta(hours=hour, minutes=minute, seconds=second, milliseconds=millisecond)
 
-    def parse_timecode_string(self, line: str) -> Union[bool, Tuple[timedelta, timedelta]]:
+    def parse_timecode_string(self, line: str) :
         """
         Parses a timecode string from an SRT file and returns a tuple of start and end timedelta objects.
         If the line does not contain a valid timecode, returns False.
@@ -113,7 +111,7 @@ class SimpleSrt:
             return start, end
         return False
 
-    def parse_srt(self, subtitle_text: str) -> Iterator[Subtitle]:
+    def parse_srt(self, subtitle_text: str):
         srtlines = [x for x in subtitle_text.split("\n") if len(x.strip()) > 0]
         srtlines += ["", ""]
 
