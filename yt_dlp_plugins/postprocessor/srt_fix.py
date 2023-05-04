@@ -215,7 +215,6 @@ class srt_fixPP(PostProcessor):
                 else:
                     self.to_screen(f'skipped srt_fix of {file}: {newfile} exists')
     def run(self, info):
-        info, files_to_delete = FFmpegSubtitlesConvertorPP(self._downloader, 'srt').run(info)
         filepath = info.get('filepath')
 
         if filepath:  # PP was called after download (default)
