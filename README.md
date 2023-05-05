@@ -24,10 +24,22 @@ See [installing yt-dlp plugins](https://github.com/yt-dlp/yt-dlp#installing-plug
 ` yt-dlp https://www.youtube.com/xxxx --write-auto-sub  --sub-lang en  --convert-subs=srt  --use-postprocessor srt_fix`
 
 
-### known issue
+### known issues
 
+#### --skip-downlaod
 If you use the `--skip download` argument in yt-dlp the postprocessor is not triggered and no conversion happens.
 You can use the tools below for existing srt files.
+
+#### --embed-subtitles
+embedding of subtitles is not supported yet. please use another tool to add them yourself. You allready have ffmpeg so you could run:
+
+for one language:
+`ffmpeg -i input.mp4 -i ger.srt -c copy -c:s mov_text -strict -2 -metadata:s:s:0 language=ger output-ger.mp4`
+replace the language string with the   [ISO 639-2/B language code](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes) for your subtitles.
+
+
+for several languages at once you need to use map:
+`ffmpeg -i input.mp4 -i input1.srt -i input2.srt -strict -2 -c copy -c:s mov_text -map 0 -map 1 -metadata:s:s:0 language=lang1 -map 2 -metadata:s:s:1 language=lang2 output.mp4`
 
 # srt fixer gui
 ![gui-screenshot.jpg](gui-screenshot.jpg)
