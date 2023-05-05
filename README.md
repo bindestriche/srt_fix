@@ -1,5 +1,5 @@
 This repository contains a  plugin package for [yt-dlp](https://github.com/yt-dlp/yt-dlp#readme). 
-It fixes duplicate lines in YouTube subtitles. 
+It fixes duplicate lines in YouTube subtitles and saves a additonal srt file called filename.fixed.srt
 
 
 
