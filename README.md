@@ -8,7 +8,7 @@ It fixes duplicate lines in YouTube subtitles and saves a additonal srt file cal
 Requires yt-dlp `2023.01.02` or above.
 
 save srt_fix.py under
-`C:\Users\{username}\AppData\Roaming\yt-dlp\plugins\srt_fix\yt_dlp_plugins`
+`C:\Users\{username}\AppData\Roaming\yt-dlp\plugins\srt_fix\yt_dlp_plugins\postprocessor`
 
 
 You can install this package with pip:

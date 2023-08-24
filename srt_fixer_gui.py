@@ -2,6 +2,7 @@
 from datetime import timedelta
 import argparse
 from simplesrt import SimpleSrt
+from simplesrt import process_srt
 
 
 try:
@@ -65,40 +66,6 @@ def main():
         process_srt(file_path, new_file_path)
 
 
-def process_srt(file_path: str, new_file_path: str):
-    with open(file_path, "r", encoding="utf8") as file, open(new_file_path, "w", encoding="utf8") as new_file:
-        srtstring = file.read()
-        srt = SimpleSrt(srtstring)
-        subs_iter = srt.subs
-        last_subtitle = None
-        index = 1
-        while True:
-            try:
-                subtitle = next(subs_iter)
-            except StopIteration:
-                break
-
-            if last_subtitle is not None:
-                if subtitle is not None:
-                    subtitle.text = subtitle.text.strip("\n ")
-                    if len(subtitle.text) == 0:  # skip over empty subtitles
-                        continue
-                    if (subtitle.start - subtitle.end < timedelta(milliseconds=150) and
-                            last_subtitle.text in subtitle.text):
-                        last_subtitle.start = subtitle.end
-                        continue
-                    current_lines = subtitle.text.split("\n")
-                    last_lines = last_subtitle.text.split("\n")
-                    if current_lines[0] == last_lines[-1]:
-                        subtitle.text = "\n".join(current_lines[1:])
-                    if subtitle.start < last_subtitle.end:
-                        last_subtitle.end = subtitle.start - timedelta(milliseconds=1)
-                new_file.write(f"{index}\n{last_subtitle}")
-                index += 1
-
-            if subtitle is None:
-                break
-            last_subtitle = subtitle
 
 
 if __name__ == "__main__":
