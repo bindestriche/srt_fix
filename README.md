@@ -63,7 +63,7 @@ Download the .exe from https://github.com/bindestriche/srt_fix/releases , which 
 
 ### other
 
-install  Python 3.7 or higher
+install  Python 3.10 or higher
 and run
 'python srt_fixer_gui.py'
 
