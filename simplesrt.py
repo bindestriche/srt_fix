@@ -27,21 +27,21 @@ class Subtitle:
             Returns a string representation of the Subtitle object with its attributes.
     """
 
-    def __init__(self, start_duration: timedelta, end_duration: timedelta, text: str):
+    def __init__(self, start_duration, end_duration, text):
         self.start = start_duration
         self.end = end_duration
         self.text = text.strip()
 
     @staticmethod
-    def _print_duration(duration: timedelta) -> str:
+    def _print_duration(duration) :
         hours, remainder = divmod(duration.seconds, 3600)
         minutes, seconds = divmod(remainder, 60)
         return f"{hours:02d}:{minutes:02d}:{seconds:02d},{duration.microseconds // 1000:03d}"
 
-    def __str__(self) -> str:
+    def __str__(self):
         return f"{self._print_duration(self.start)} --> {self._print_duration(self.end)}\n{self.text}\n\n"
 
-    def __repr__(self) -> str:
+    def __repr__(self):
         return f"Subtitle Object start:{self.start}, end:{self.end}, text:'{self.text}'"
 
 
@@ -72,11 +72,11 @@ class SimpleSrt:
         subs = srt.subs
         """
 
-    def __init__(self, srt_string: str):
+    def __init__(self, srt_string):
         self.subs = self.parse_srt(srt_string)
 
     @staticmethod
-    def get_duration(parts: list[int, int, int, int]) -> timedelta:
+    def get_duration(parts) :
         """
         get_duration(parts: Tuple[int, int, int, int]) -> timedelta:
         Returns a timedelta object representing the duration from a tuple of hours, minutes, seconds, and milliseconds.
@@ -88,7 +88,7 @@ class SimpleSrt:
 
         return timedelta(hours=hour, minutes=minute, seconds=second, milliseconds=millisecond)
 
-    def parse_timecode_string(self, line: str) -> Union[bool, Tuple[timedelta, timedelta]]:
+    def parse_timecode_string(self, line) -> Union[bool, Tuple[timedelta, timedelta]]:
         """
         Parses a timecode string from an SRT file and returns a tuple of start and end timedelta objects.
         If the line does not contain a valid timecode, returns False.
@@ -108,7 +108,7 @@ class SimpleSrt:
             return start, end
         return False
 
-    def parse_srt(self, subtitle_text: str) -> Iterator[Subtitle]:
+    def parse_srt(self, subtitle_text) :
         srtlines = [x for x in subtitle_text.split("\n") if len(x.strip()) > 0]
         srtlines += ["", ""]
 
@@ -172,7 +172,7 @@ def dedupe_yt_srt(subs_iter):
     return text
 
 
-def process_srt(file_path: str, new_file_path: str):
+def process_srt(file_path, new_file_path):
     text = ""
     with open(file_path, "r", encoding="utf8") as file:
         srtstring = file.read()
