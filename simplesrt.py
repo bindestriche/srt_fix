@@ -201,7 +201,6 @@ def dedupe_yt_srt(subs_iter):
     yield previous_subtitle
 
 
-
 def subs_to_text(subs_iter):
     index = 1
     text = ""
