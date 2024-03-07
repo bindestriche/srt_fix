@@ -1,4 +1,5 @@
 #  Don't use relative imports
+from yt_dlp.postprocessor import FFmpegSubtitlesConvertorPP
 from yt_dlp.postprocessor.common import PostProcessor
 
 # start
@@ -194,7 +195,7 @@ def process_srt(file_path: str, new_file_path: str):
 
 class srt_fixPP(PostProcessor):
     SUPPORTED_EXTS = ('srt')
-        
+
     def __init__(self, downloader=None, **kwargs):
         # ⚠ Only kwargs can be passed from the CLI, and all argument values will be string
         # Also, "downloader", "when" and "key" are reserved names
@@ -213,26 +214,27 @@ class srt_fixPP(PostProcessor):
                     self.to_screen(f'applied srt_fix to {file} saved as {rawname + ".fixed.srt"}')
                 else:
                     self.to_screen(f'skipped srt_fix of {file}: {newfile} exists')
-    
+
     # ℹ️ See docstring of yt_dlp.postprocessor.common.PostProcessor.run
     def run(self, info):
+        files_to_delete, info = FFmpegSubtitlesConvertorPP(self._downloader, 'srt').run(info)
         subtitles = info.get('requested_subtitles')
         if not subtitles:
             self.to_screen('There aren\'t any subtitles to process')
             return [], info
-        
+
         #self.to_screen(f'Postprocessing {info}')
-        
+
         modified_subtitles = {}
-        
+
         for lang, sub_info in subtitles.items():
             if sub_info['ext'] not in self.SUPPORTED_EXTS:
                 continue
                 #self.to_screen(f'Subtitles can only be postprocessed in for these formats: {", ".join(self.SUPPORTED_EXTS)}')
                 #return [], info
-            
+
             self.to_screen(f'Postprocessing {lang}')
-            
+
             # Create backup
             backup_tag_string = '-original'
             lang_for_original = lang + backup_tag_string
@@ -241,41 +243,26 @@ class srt_fixPP(PostProcessor):
             # HACK: This should be done properly with pathlib or yt-dlp replace_extension()
             original_filepath = original_filepath.replace('.' + lang + '.', '.' + lang_for_original + '.')
             modified_subtitles[lang_for_original]['filepath'] = original_filepath
-            
+
             subtitle_data = sub_info.get('data')
             if not subtitle_data:
                 continue
-            
+
             srt = SimpleSrt(subtitle_data)
             text = dedupe_yt_srt(srt.subs)
-            
+
             sub_info['data'] = text
             modified_subtitles[lang] = sub_info
-            
+
         subtitles.update(modified_subtitles) # Merge
-        
+
         #self.to_screen(f'Postprocessing result: \n {modified_subtitles}')
         #requested_subtitles = info['requested_subtitles']
         #self.to_screen(f'Postprocessing result: \n {requested_subtitles}')
-        
+
         #files_to_move = info['__files_to_move']
         #self.to_screen(f'Initial files_to_move: {files_to_move}')
-        
-        # HACK: The replacement set of subtitles is never written. We proably are called too late. Do it ourselves for now.
-        for lang, sub_info in subtitles.items():
-            new_file_path = sub_info.get('filepath')
-            text = sub_info.get('data')
-            
-            with open(new_file_path, "w", encoding="utf8") as new_file:
-                new_file.write(text)
-            
-            info['__files_to_move'][new_file.name] = os.path.basename(new_file_path)
-            #self.to_screen(f'Wrote postprocessed {lang}')
-            
-        #files_to_move = info['__files_to_move']
-        #self.to_screen(f'Modified files_to_move: {files_to_move}')
-        
-        '''
+
         filepath = info.get('filepath')
 
         if filepath:  # PP was called after download (default)
@@ -286,6 +273,5 @@ class srt_fixPP(PostProcessor):
             filepath = info.get('_filename')
             self.to_screen(f'Pre-processed {filepath!r} with {self._kwargs}')
             self.process_all(filepath)
-        '''
-        
-        return [], info  # return list_of_files_to_delete, info_dict
+
+        return files_to_delete, info
