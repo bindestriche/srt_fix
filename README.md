@@ -10,6 +10,12 @@ Requires yt-dlp `2023.01.02` or above.
 save srt_fix.py under
 `C:\Users\{username}\AppData\Roaming\yt-dlp\plugins\srt_fix\yt_dlp_plugins\postprocessor`
 
+When using yt-dlp.exe , create a folder `yt-dlp-plugins` in the same folder as your .exe file. Then place the extracted srt_fix folder inside the `yt-dlp-plugins` folder. like this:
+
+`"some_folder\yt-dlp.exe"`
+
+`"some_folder\yt-dlp-plugins\srt_fix\yt_dlp_plugins\postprocessor\srt_fix.py"`
+
 
 You can install this package with pip:
 ```
@@ -32,10 +38,12 @@ See [installing yt-dlp plugins](https://github.com/yt-dlp/yt-dlp#installing-plug
 
 #### --skip-downlaod
 If you use the `--skip download` argument in yt-dlp the postprocessor is not triggered and no conversion happens.
-You can use the tools below for existing srt files.
+you can use `--use-postprocessor srt_fix:when=before_dl` to trigger the ppstprocessor before the download
+
+`yt-dlp.exe https://www.youtube.com/watch?v=xxxx  --write-sub    --use-postprocessor srt_fix:when=before_dl --all-subs --skip-download`
 
 #### --embed-subtitles
-embedding of subtitles is not supported yet. please use another tool to add them yourself. You allready have ffmpeg so you could run:
+embedding of subtitles is not supported. Please use another tool to add them yourself. You allready have ffmpeg so you could run:
 
 for one language:
 `ffmpeg -i input.mp4 -i ger.srt -c copy -c:s mov_text -strict -2 -metadata:s:s:0 language=ger output-ger.mp4`
