@@ -130,43 +130,85 @@ class SimpleSrt:
             else:
                 i += 1
 
-
 def dedupe_yt_srt(subs_iter):
-    last_subtitle = None
+    previous_subtitle = None
     index = 1
     text = ""
-
-
     for subtitle in subs_iter:
 
-        if last_subtitle is None: # first interation set last for comparison
-             last_subtitle = subtitle
+
+        if previous_subtitle is None: # first interation set previous subtitle for comparison
+             previous_subtitle = subtitle
              continue
 
-        subtitle.text = subtitle.text.strip("\n")
+        subtitle.text = subtitle.text.strip() # remove trailing linebreaks
+
+
+
         if len(subtitle.text) == 0:  # skip over empty subtitles
             continue
 
         if (subtitle.start - subtitle.end < timedelta(milliseconds=150) and # very short
-                        last_subtitle.text == subtitle.text): # same text as previous
-            last_subtitle.end = subtitle.end # lengthen previous
+                        subtitle.text in previous_subtitle.text ): # same text as previous
+            previous_subtitle.end = subtitle.end # lengthen previous subtitle
             continue
+        
+
+     
+        
+
 
         current_lines = subtitle.text.split("\n")
-        last_lines = last_subtitle.text.split("\n")
+        last_lines = previous_subtitle.text.split("\n")
 
-        if current_lines[0] == last_lines[-1]: # if first current is last previous
-            subtitle.text = "\n".join(current_lines[1:]) # discard first line of current
+        singleword=False
 
-        if subtitle.start <= last_subtitle.end: # remove overlap and let 1ms gap
-            last_subtitle.end = subtitle.start - timedelta(milliseconds=1)
+        if current_lines[0] == last_lines[-1]: # if first current is  last previous
+            if len(last_lines)==1:
+                if  len(last_lines[0].split(" "))<2 and len(last_lines[0])>2: # if  is just one word            
+                    singleword=True
+                    subtitle.text= current_lines[0]+" "+"\n".join(current_lines[1:]) # remove line break after single word
+  
+                else:
+                    subtitle.text = "\n".join(current_lines[1:]) # discard first line of current            
+            else:        
+                subtitle.text = "\n".join(current_lines[1:]) # discard first line of current
+        else: # not fusing two lines
+            if len(subtitle.text.split(" "))<=2: # only one word in subtitle
+         
+                previous_subtitle.end = subtitle.end # lengthen previous subtitle
+                title_text=subtitle.text
+                if title_text[0]!=" ":
+                    title_text=" "+title_text
 
-        text += f"{index}\n{last_subtitle}"# __str__ hnadles adding timecode
-        last_subtitle = subtitle
+                previous_subtitle.text+=title_text # add text to previous
+                continue # drop this subtitle
+
+
+        if subtitle.start <= previous_subtitle.end: # remove overlap and let 1ms gap
+            previous_subtitle.end = subtitle.start - timedelta(milliseconds=1)
+
+        if subtitle.start >= subtitle.end: # swap start and end if wrong order
+            end =subtitle.end 
+            subtitle.end= subtitle.start
+            subtitle.start = end
+            
+
+        if not singleword:
+            yield previous_subtitle
+        previous_subtitle = subtitle
         index += 1
-    text += f"{index}\n{last_subtitle}"
+    yield previous_subtitle
 
 
+def subs_to_text(subs_iter):
+    index = 1
+    text = ""
+
+    for subtitle in subs_iter:
+
+        text += f"{index}\n{subtitle}"# conversion to str handles adding timecode
+        index += 1
 
 
     return text
@@ -177,7 +219,8 @@ def process_srt(file_path, new_file_path):
     with open(file_path, "r", encoding="utf8") as file:
         srtstring = file.read()
         srt = SimpleSrt(srtstring)
-        text = dedupe_yt_srt(srt.subs)
+        subs = dedupe_yt_srt(srt.subs)
+        text=subs_to_text(subs)
 
     with open(new_file_path, "w", encoding="utf8") as new_file:
         new_file.write(text.strip())
