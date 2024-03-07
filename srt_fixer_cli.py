@@ -69,9 +69,9 @@ def main():
             return
 
         if not output_file and output_directory:
-            new_file_path = os.oath.join(output_directory,file_path[:-4] + ".fixed.srt")
+            new_file_path = os.path.join(output_directory,file_path[:-4] + ".fixed.srt")
         elif os.path.isdir(output_file):
-            new_file_path = os.oath.join(output_directory, file_path[:-4] + ".fixed.srt")
+            new_file_path = os.path.join(output_directory, file_path[:-4] + ".fixed.srt")
             pass
 
             new_file_path = output_file or file_path[:-4] + ".fixed.srt"

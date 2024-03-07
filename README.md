@@ -84,8 +84,8 @@ A progress bar will show the progress of the subtitle processing.
 Upon completion, a success message will be displayed, and the output folder will open in File Explorer.
 
 # srt fixer cli
-If you use `--skip download` the postprocessor is not triggered and no conversion happens. for that case you can use
-[srt_fixer_cli.py](srt_fixer_cli.py) to process the files independently.
+You can use the [srt_fixer_cli.py](srt_fixer_cli.py) to process the files independently.
+To use the tool you need to have simplesrt.py and srt_fixer_cli.py in the same directory.
 
 `python srt_fixer_cli.py brokensubtitle.srt`
 will create _brokensubtitle.fixed.srt_ in current folder
