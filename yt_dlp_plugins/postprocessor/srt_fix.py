@@ -1,6 +1,6 @@
 #  Don't use relative imports
 from yt_dlp.postprocessor.common import PostProcessor
-
+from yt_dlp.postprocessor import FFmpegSubtitlesConvertorPP
 # start
 import re
 import os
@@ -133,57 +133,99 @@ class SimpleSrt:
             else:
                 i += 1
 
-
 def dedupe_yt_srt(subs_iter):
-    last_subtitle = None
+    previous_subtitle = None
     index = 1
     text = ""
-
-
     for subtitle in subs_iter:
 
-        if last_subtitle is None: # first interation set last for comparison
-             last_subtitle = subtitle
+
+        if previous_subtitle is None: # first interation set previous subtitle for comparison
+             previous_subtitle = subtitle
              continue
 
-        subtitle.text = subtitle.text.strip("\n")
+        subtitle.text = subtitle.text.strip() # remove trailing linebreaks
+
+
+
         if len(subtitle.text) == 0:  # skip over empty subtitles
             continue
 
         if (subtitle.start - subtitle.end < timedelta(milliseconds=150) and # very short
-                        last_subtitle.text == subtitle.text): # same text as previous
-            last_subtitle.end = subtitle.end # lengthen previous
+                        subtitle.text in previous_subtitle.text ): # same text as previous
+            previous_subtitle.end = subtitle.end # lengthen previous subtitle
             continue
+        
+
+     
+        
+
 
         current_lines = subtitle.text.split("\n")
-        last_lines = last_subtitle.text.split("\n")
+        last_lines = previous_subtitle.text.split("\n")
 
-        if current_lines[0] == last_lines[-1]: # if first current is last previous
-            subtitle.text = "\n".join(current_lines[1:]) # discard first line of current
+        singleword=False
 
-        if subtitle.start <= last_subtitle.end: # remove overlap and let 1ms gap
-            last_subtitle.end = subtitle.start - timedelta(milliseconds=1)
+        if current_lines[0] == last_lines[-1]: # if first current is  last previous
+            if len(last_lines)==1:
+                if  len(last_lines[0].split(" "))<2 and len(last_lines[0])>2: # if  is just one word            
+                    singleword=True
+                    subtitle.text= current_lines[0]+" "+"\n".join(current_lines[1:]) # remove line break after single word
+  
+                else:
+                    subtitle.text = "\n".join(current_lines[1:]) # discard first line of current            
+            else:        
+                subtitle.text = "\n".join(current_lines[1:]) # discard first line of current
+        else: # not fusing two lines
+            if len(subtitle.text.split(" "))<=2: # only one word in subtitle
+         
+                previous_subtitle.end = subtitle.end # lengthen previous subtitle
+                title_text=subtitle.text
+                if title_text[0]!=" ":
+                    title_text=" "+title_text
 
-        text += f"{index}\n{last_subtitle}"# __str__ hnadles adding timecode
-        last_subtitle = subtitle
+                previous_subtitle.text+=title_text # add text to previous
+                continue # drop this subtitle
+
+
+        if subtitle.start <= previous_subtitle.end: # remove overlap and let 1ms gap
+            previous_subtitle.end = subtitle.start - timedelta(milliseconds=1)
+
+        if subtitle.start >= subtitle.end: # swap start and end if wrong order
+            end =subtitle.end 
+            subtitle.end= subtitle.start
+            subtitle.start = end
+            
+
+        if not singleword:
+            yield previous_subtitle
+        previous_subtitle = subtitle
         index += 1
-    text += f"{index}\n{last_subtitle}"
+    yield previous_subtitle
 
 
+def subs_to_text(subs_iter):
+    index = 1
+    text = ""
+
+    for subtitle in subs_iter:
+
+        text += f"{index}\n{subtitle}"# conversion to str handles adding timecode
+        index += 1
 
 
     return text
 
-
-def process_srt(file_path: str, new_file_path: str):
+def process_srt(file_path, new_file_path):
     text = ""
     with open(file_path, "r", encoding="utf8") as file:
         srtstring = file.read()
         srt = SimpleSrt(srtstring)
-        text = dedupe_yt_srt(srt.subs)
+        subs = dedupe_yt_srt(srt.subs)
+        text=subs_to_text(subs)
 
     with open(new_file_path, "w", encoding="utf8") as new_file:
-        new_file.write(text)
+        new_file.write(text.strip())
 
 # ℹ️ See the docstring of yt_dlp.postprocessor.common.PostProcessor
 
@@ -216,6 +258,7 @@ class srt_fixPP(PostProcessor):
     
     # ℹ️ See docstring of yt_dlp.postprocessor.common.PostProcessor.run
     def run(self, info):
+        files_to_delete, info = FFmpegSubtitlesConvertorPP(self._downloader, 'srt').run(info)
         subtitles = info.get('requested_subtitles')
         if not subtitles:
             self.to_screen('There aren\'t any subtitles to process')
@@ -231,10 +274,10 @@ class srt_fixPP(PostProcessor):
                 #self.to_screen(f'Subtitles can only be postprocessed in for these formats: {", ".join(self.SUPPORTED_EXTS)}')
                 #return [], info
             
-            self.to_screen(f'Postprocessing {lang}')
+            self.to_screen(f'srt fix for {lang}')
             
             # Create backup
-            backup_tag_string = '-original'
+            backup_tag_string = '-fixed'
             lang_for_original = lang + backup_tag_string
             modified_subtitles[lang_for_original] = sub_info.copy()
             original_filepath = modified_subtitles[lang_for_original].get('filepath')
@@ -247,10 +290,13 @@ class srt_fixPP(PostProcessor):
                 continue
             
             srt = SimpleSrt(subtitle_data)
-            text = dedupe_yt_srt(srt.subs)
+            subs = dedupe_yt_srt(srt.subs)
+            text=subs_to_text(subs)     
             
             sub_info['data'] = text
             modified_subtitles[lang] = sub_info
+            with open(original_filepath[:-4]+".srt","w",encoding="utf-8") as f:
+                f.write(text)
             
         subtitles.update(modified_subtitles) # Merge
         
@@ -260,32 +306,9 @@ class srt_fixPP(PostProcessor):
         
         #files_to_move = info['__files_to_move']
         #self.to_screen(f'Initial files_to_move: {files_to_move}')
-        
-        # HACK: The replacement set of subtitles is never written. We proably are called too late. Do it ourselves for now.
-        for lang, sub_info in subtitles.items():
-            new_file_path = sub_info.get('filepath')
-            text = sub_info.get('data')
-            
-            with open(new_file_path, "w", encoding="utf8") as new_file:
-                new_file.write(text)
-            
-            info['__files_to_move'][new_file.name] = os.path.basename(new_file_path)
-            #self.to_screen(f'Wrote postprocessed {lang}')
-            
+          
         #files_to_move = info['__files_to_move']
         #self.to_screen(f'Modified files_to_move: {files_to_move}')
         
-        '''
-        filepath = info.get('filepath')
-
-        if filepath:  # PP was called after download (default)
-            self.to_screen(f'Post-processed {filepath!r} with {self._kwargs}')
-            self.process_all(filepath)
-
-        else:  # PP was called before actual download
-            filepath = info.get('_filename')
-            self.to_screen(f'Pre-processed {filepath!r} with {self._kwargs}')
-            self.process_all(filepath)
-        '''
         
-        return [], info  # return list_of_files_to_delete, info_dict
+        return files_to_delete, info
