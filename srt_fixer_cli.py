@@ -63,7 +63,7 @@ def main():
                     new_file_path = os.path.join(output_directory, file[:-4] + ".fixed.srt")
                     process_srt(file_path, new_file_path)
     else:
-        file_path = args.input
+        file_path = str(args.input)
         if not file_path or not os.path.isfile(file_path):
             print(f"Input file '{file_path}' does not exist or is not accessible.")
             return
@@ -73,7 +73,7 @@ def main():
         elif os.path.isdir(output_file):
             new_file_path = os.path.join(output_directory, file_path[:-4] + ".fixed.srt")
             pass
-
+        else:
             new_file_path = output_file or file_path[:-4] + ".fixed.srt"
 
         process_srt(file_path, new_file_path)
