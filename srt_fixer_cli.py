@@ -70,7 +70,7 @@ def main():
 
         if not output_file and output_directory:
             new_file_path = os.path.join(output_directory,file_path[:-4] + ".fixed.srt")
-        elif os.path.isdir(output_file):
+        elif output_file and os.path.isdir(output_file):
             new_file_path = os.path.join(output_directory, file_path[:-4] + ".fixed.srt")
             pass
         else:
