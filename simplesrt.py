@@ -148,7 +148,7 @@ def dedupe_yt_srt(subs_iter):
         if len(subtitle.text) == 0:  # skip over empty subtitles
             continue
 
-        if (subtitle.start - subtitle.end < timedelta(milliseconds=150) and # very short
+        if (subtitle.end - subtitle.start < timedelta(milliseconds=150) and # very short
                         subtitle.text in previous_subtitle.text ): # same text as previous
             previous_subtitle.end = subtitle.end # lengthen previous subtitle
             continue
