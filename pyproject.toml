@@ -1,6 +1,23 @@
 [build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
 
-[tool.distutils.bdist_wheel]
-universal = true
+[project]
+name = "srt_fix"
+version = "1.1.0"
+requires-python = ">=3.10"
+readme = "README.md"
+license = "Unlicense"
+license-files = ["LICENSE"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/yt_dlp_plugins",
+    "/.gitignore",  # included by default, needed for auto-excludes
+    "/LICENSE",  # included as license
+    "/pyproject.toml",  # included by default
+    "/README.md",  # included as readme
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["yt_dlp_plugins"]
